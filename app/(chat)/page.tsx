@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { cookies } from "next/headers";
 import { Chat } from "@/components/chat";
 import { DataStreamHandler } from "@/components/data-stream-handler";
 import { DEFAULT_CHAT_MODEL } from "@/lib/ai/models";
@@ -13,6 +14,10 @@ export default function Page() {
 }
 
 async function NewChatPage() {
+  // Force dynamic rendering by reading cookies
+  // This allows crypto.randomUUID() to be used
+  await cookies();
+
   const id = generateUUID();
 
   return (
