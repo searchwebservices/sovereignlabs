@@ -78,11 +78,11 @@ const deviceTypeMap = new Map(
 );
 
 export function getDeviceTypeIcon(type: string | null | undefined): LucideIcon {
-  return deviceTypeMap.get(type ?? "")?.icon ?? Box;
+  return deviceTypeMap.get((type ?? "") as DeviceType)?.icon ?? Box;
 }
 
 export function getDeviceTypeLabel(type: string | null | undefined): string {
-  return deviceTypeMap.get(type ?? "")?.label ?? "Unknown";
+  return deviceTypeMap.get((type ?? "") as DeviceType)?.label ?? "Unknown";
 }
 
 // ─── Part Categories ─────────────────────────────────────────
@@ -121,9 +121,9 @@ const partCategoryMap = new Map(
 );
 
 export function getPartCategoryIcon(category: string | null | undefined): LucideIcon {
-  return partCategoryMap.get(category ?? "")?.icon ?? Puzzle;
+  return partCategoryMap.get((category ?? "") as PartCategory)?.icon ?? Puzzle;
 }
 
 export function getPartCategoryLabel(category: string | null | undefined): string {
-  return partCategoryMap.get(category ?? "")?.label ?? "Uncategorized";
+  return partCategoryMap.get((category ?? "") as PartCategory)?.label ?? "Uncategorized";
 }
