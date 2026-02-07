@@ -1,17 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import type { User } from "next-auth";
+import { usePathname, useRouter } from "next/navigation";
+type User = { id?: string; email?: string | null };
 import { useState } from "react";
-import { toast } from "sonner";
-import { useSWRConfig } from "swr";
-import { unstable_serialize } from "swr/infinite";
-import { PlusIcon, TrashIcon } from "@/components/icons";
 import {
-  getChatHistoryPaginationKey,
-  SidebarHistory,
-} from "@/components/sidebar-history";
+  LayoutDashboard,
+  Cpu,
+  Puzzle,
+  Rocket,
+  MessageSquare,
+  ChevronDown,
+  ChevronRight,
+  CheckSquare,
+  ShoppingCart,
+} from "lucide-react";
+import { PlusIcon } from "@/components/icons";
+import { SidebarHistory } from "@/components/sidebar-history";
 import { SidebarUserNav } from "@/components/sidebar-user-nav";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,83 +25,119 @@ import {
   SidebarFooter,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarGroupContent,
   useSidebar,
 } from "@/components/ui/sidebar";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "./ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+
+const labNavItems = [
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/devices", label: "Devices", icon: Cpu },
+  { href: "/parts", label: "Parts", icon: Puzzle },
+  { href: "/initiatives", label: "Initiatives", icon: Rocket },
+  { href: "/tasks", label: "Tasks", icon: CheckSquare },
+  { href: "/purchases", label: "Purchases", icon: ShoppingCart },
+];
 
 export function AppSidebar({ user }: { user: User | undefined }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { setOpenMobile } = useSidebar();
-  const { mutate } = useSWRConfig();
-  const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false);
+  const [chatHistoryOpen, setChatHistoryOpen] = useState(true);
 
-  const handleDeleteAll = () => {
-    const deletePromise = fetch("/api/history", {
-      method: "DELETE",
-    });
-
-    toast.promise(deletePromise, {
-      loading: "Deleting all chats...",
-      success: () => {
-        mutate(unstable_serialize(getChatHistoryPaginationKey));
-        setShowDeleteAllDialog(false);
-        router.replace("/");
-        router.refresh();
-        return "All chats deleted successfully";
-      },
-      error: "Failed to delete all chats",
-    });
+  const isLabPage = (href: string) => {
+    if (href === "/dashboard") return pathname === "/dashboard";
+    return pathname?.startsWith(href);
   };
+
+  const isChatPage =
+    pathname === "/" || pathname?.startsWith("/chat/");
 
   return (
     <>
       <Sidebar className="group-data-[side=left]:border-r-0">
         <SidebarHeader>
           <SidebarMenu>
-            <div className="flex flex-row items-center justify-between">
+            <SidebarMenuItem>
               <Link
-                className="flex flex-row items-center gap-3"
                 href="/"
-                onClick={() => {
-                  setOpenMobile(false);
-                }}
+                onClick={() => setOpenMobile(false)}
+                className="flex items-center gap-2.5 rounded-md px-2 py-2 font-semibold text-sm hover:bg-muted transition-colors"
               >
-                <span className="cursor-pointer rounded-md px-2 font-semibold text-lg hover:bg-muted">
-                  Chatbot
-                </span>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/logo-black.png"
+                  alt="Sovereign Labs"
+                  width={28}
+                  height={28}
+                  className="size-7 dark:hidden"
+                />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/logo-white.png"
+                  alt="Sovereign Labs"
+                  width={28}
+                  height={28}
+                  className="size-7 hidden dark:block"
+                />
+                <span className="truncate">Sovereign Labs</span>
               </Link>
-              <div className="flex flex-row gap-1">
-                {user && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        className="h-8 p-1 md:h-fit md:p-2"
-                        onClick={() => setShowDeleteAllDialog(true)}
-                        type="button"
-                        variant="ghost"
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarHeader>
+
+        <SidebarContent>
+          {/* Lab Navigation */}
+          <SidebarGroup>
+            <SidebarGroupLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              Lab
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {labNavItems.map((item) => (
+                  <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isLabPage(item.href)}
+                    >
+                      <Link
+                        href={item.href}
+                        onClick={() => setOpenMobile(false)}
                       >
-                        <TrashIcon />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent align="end" className="hidden md:block">
-                      Delete All Chats
-                    </TooltipContent>
-                  </Tooltip>
+                        <item.icon className="size-4" />
+                        <span>{item.label}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+
+          {/* Chat Section */}
+          <SidebarGroup>
+            <div className="flex items-center justify-between pr-1">
+              <button
+                onClick={() => setChatHistoryOpen(!chatHistoryOpen)}
+                className="flex items-center gap-1 text-xs font-medium text-muted-foreground uppercase tracking-wider px-2 py-1 hover:text-foreground transition-colors"
+                type="button"
+              >
+                {chatHistoryOpen ? (
+                  <ChevronDown className="size-3" />
+                ) : (
+                  <ChevronRight className="size-3" />
                 )}
+                Chat
+              </button>
+              <div className="flex items-center gap-0.5">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
-                      className="h-8 p-1 md:h-fit md:p-2"
+                      className="h-6 w-6 p-0"
                       onClick={() => {
                         setOpenMobile(false);
                         router.push("/");
@@ -114,34 +155,19 @@ export function AppSidebar({ user }: { user: User | undefined }) {
                 </Tooltip>
               </div>
             </div>
-          </SidebarMenu>
-        </SidebarHeader>
-        <SidebarContent>
-          <SidebarHistory user={user} />
+            {chatHistoryOpen && (
+              <SidebarGroupContent>
+                <SidebarHistory user={user} />
+              </SidebarGroupContent>
+            )}
+          </SidebarGroup>
         </SidebarContent>
-        <SidebarFooter>{user && <SidebarUserNav user={user} />}</SidebarFooter>
+
+        <SidebarFooter>
+          {user && <SidebarUserNav user={user} />}
+        </SidebarFooter>
       </Sidebar>
 
-      <AlertDialog
-        onOpenChange={setShowDeleteAllDialog}
-        open={showDeleteAllDialog}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete all chats?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete all
-              your chats and remove them from our servers.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteAll}>
-              Delete All
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   );
 }

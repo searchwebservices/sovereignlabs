@@ -4,12 +4,43 @@ import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 
 import "./globals.css";
-import { SessionProvider } from "next-auth/react";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://chat.vercel.ai"),
-  title: "Next.js Chatbot Template",
-  description: "Next.js chatbot template using the AI SDK.",
+  metadataBase: new URL("https://sovereignlabs.com"),
+  title: {
+    default: "Sovereign Labs",
+    template: "%s | Sovereign Labs",
+  },
+  description:
+    "Sovereign Labs — AI-powered lab management for devices, parts, and research initiatives.",
+  applicationName: "Sovereign Labs",
+  keywords: ["AI", "lab management", "inventory", "devices", "research"],
+  openGraph: {
+    type: "website",
+    siteName: "Sovereign Labs",
+    title: "Sovereign Labs",
+    description:
+      "AI-powered lab management for devices, parts, and research initiatives.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Sovereign Labs",
+    description:
+      "AI-powered lab management for devices, parts, and research initiatives.",
+  },
+  icons: {
+    icon: [
+      {
+        url: "/logo-black.png",
+        media: "(prefers-color-scheme: light)",
+      },
+      {
+        url: "/logo-white.png",
+        media: "(prefers-color-scheme: dark)",
+      },
+    ],
+    apple: "/logo-black.png",
+  },
 };
 
 export const viewport = {
@@ -79,7 +110,7 @@ export default function RootLayout({
           enableSystem
         >
           <Toaster position="top-center" />
-          <SessionProvider>{children}</SessionProvider>
+          {children}
         </ThemeProvider>
       </body>
     </html>

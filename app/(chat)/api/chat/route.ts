@@ -9,12 +9,16 @@ import {
 } from "ai";
 import { after } from "next/server";
 import { createResumableStreamContext } from "resumable-stream";
-import { auth, type UserType } from "@/app/(auth)/auth";
-import { entitlementsByUserType } from "@/lib/ai/entitlements";
+import { getSession } from "@/lib/supabase/server";
+import { entitlements } from "@/lib/ai/entitlements";
 import { type RequestHints, systemPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { createDocument } from "@/lib/ai/tools/create-document";
-import { getWeather } from "@/lib/ai/tools/get-weather";
+import { getLabDashboard } from "@/lib/ai/tools/get-lab-dashboard";
+import { manageDevice } from "@/lib/ai/tools/manage-device";
+import { manageInitiative } from "@/lib/ai/tools/manage-initiative";
+import { managePart } from "@/lib/ai/tools/manage-part";
+import { queryLabData } from "@/lib/ai/tools/query-lab-data";
 import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
 import { updateDocument } from "@/lib/ai/tools/update-document";
 import { isProductionEnvironment } from "@/lib/constants";
@@ -62,20 +66,18 @@ export async function POST(request: Request) {
     const { id, message, messages, selectedChatModel, selectedVisibilityType } =
       requestBody;
 
-    const session = await auth();
+    const session = await getSession();
 
     if (!session?.user) {
       return new ChatSDKError("unauthorized:chat").toResponse();
     }
-
-    const userType: UserType = session.user.type;
 
     const messageCount = await getMessageCountByUserId({
       id: session.user.id,
       differenceInHours: 24,
     });
 
-    if (messageCount > entitlementsByUserType[userType].maxMessagesPerDay) {
+    if (messageCount > entitlements.maxMessagesPerDay) {
       return new ChatSDKError("rate_limit:chat").toResponse();
     }
 
@@ -147,7 +149,11 @@ export async function POST(request: Request) {
           experimental_activeTools: isReasoningModel
             ? []
             : [
-                "getWeather",
+                "queryLabData",
+                "manageDevice",
+                "managePart",
+                "manageInitiative",
+                "getLabDashboard",
                 "createDocument",
                 "updateDocument",
                 "requestSuggestions",
@@ -160,7 +166,11 @@ export async function POST(request: Request) {
               }
             : undefined,
           tools: {
-            getWeather,
+            queryLabData,
+            manageDevice,
+            managePart,
+            manageInitiative,
+            getLabDashboard,
             createDocument: createDocument({ session, dataStream }),
             updateDocument: updateDocument({ session, dataStream }),
             requestSuggestions: requestSuggestions({ session, dataStream }),
@@ -270,7 +280,7 @@ export async function DELETE(request: Request) {
     return new ChatSDKError("bad_request:api").toResponse();
   }
 
-  const session = await auth();
+  const session = await getSession();
 
   if (!session?.user) {
     return new ChatSDKError("unauthorized:chat").toResponse();

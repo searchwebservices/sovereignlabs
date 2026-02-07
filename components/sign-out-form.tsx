@@ -1,16 +1,17 @@
-import Form from "next/form";
+"use client";
 
-import { signOut } from "@/app/(auth)/auth";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase/client";
 
 export const SignOutForm = () => {
-  return (
-    <Form
-      action={async () => {
-        "use server";
+  const router = useRouter();
 
-        await signOut({
-          redirectTo: "/",
-        });
+  return (
+    <form
+      action={async () => {
+        await supabase.auth.signOut();
+        router.push("/login");
+        router.refresh();
       }}
       className="w-full"
     >
@@ -20,6 +21,6 @@ export const SignOutForm = () => {
       >
         Sign out
       </button>
-    </Form>
+    </form>
   );
 };

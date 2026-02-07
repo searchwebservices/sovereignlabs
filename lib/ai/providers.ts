@@ -1,4 +1,4 @@
-import { gateway } from "@ai-sdk/gateway";
+import { openrouter } from "@openrouter/ai-sdk-provider";
 import {
   customProvider,
   extractReasoningMiddleware,
@@ -36,27 +36,27 @@ export function getLanguageModel(modelId: string) {
     modelId.includes("reasoning") || modelId.endsWith("-thinking");
 
   if (isReasoningModel) {
-    const gatewayModelId = modelId.replace(THINKING_SUFFIX_REGEX, "");
+    const openrouterModelId = modelId.replace(THINKING_SUFFIX_REGEX, "");
 
     return wrapLanguageModel({
-      model: gateway.languageModel(gatewayModelId),
+      model: openrouter(openrouterModelId),
       middleware: extractReasoningMiddleware({ tagName: "thinking" }),
     });
   }
 
-  return gateway.languageModel(modelId);
+  return openrouter(modelId);
 }
 
 export function getTitleModel() {
   if (isTestEnvironment && myProvider) {
     return myProvider.languageModel("title-model");
   }
-  return gateway.languageModel("google/gemini-2.5-flash-lite");
+  return openrouter("google/gemini-2.5-flash-lite");
 }
 
 export function getArtifactModel() {
   if (isTestEnvironment && myProvider) {
     return myProvider.languageModel("artifact-model");
   }
-  return gateway.languageModel("anthropic/claude-haiku-4.5");
+  return openrouter("google/gemini-2.5-flash-lite");
 }

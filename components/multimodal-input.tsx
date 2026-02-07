@@ -27,11 +27,8 @@ import {
   ModelSelectorName,
   ModelSelectorTrigger,
 } from "@/components/ai-elements/model-selector";
-import {
-  chatModels,
-  DEFAULT_CHAT_MODEL,
-  modelsByProvider,
-} from "@/lib/ai/models";
+import { DEFAULT_CHAT_MODEL } from "@/lib/ai/models";
+import { useUserModels } from "@/hooks/use-user-models";
 import type { Attachment, ChatMessage } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import {
@@ -46,12 +43,6 @@ import { PreviewAttachment } from "./preview-attachment";
 import { SuggestedActions } from "./suggested-actions";
 import { Button } from "./ui/button";
 import type { VisibilityType } from "./visibility-selector";
-
-function setCookie(name: string, value: string) {
-  const maxAge = 60 * 60 * 24 * 365; // 1 year
-  // biome-ignore lint/suspicious/noDocumentCookie: needed for client-side cookie setting
-  document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${maxAge}`;
-}
 
 function PureMultimodalInput({
   chatId,
@@ -469,20 +460,43 @@ function PureModelSelectorCompact({
   onModelChange?: (modelId: string) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [addingModel, setAddingModel] = useState(false);
+  const [newModelId, setNewModelId] = useState("");
+  const { allModels, addModel, removeModel, selectModel, modelsByProvider } = useUserModels();
 
   const selectedModel =
-    chatModels.find((m) => m.id === selectedModelId) ??
-    chatModels.find((m) => m.id === DEFAULT_CHAT_MODEL) ??
-    chatModels[0];
-  const [provider] = selectedModel.id.split("/");
+    allModels.find((m) => m.id === selectedModelId) ??
+    allModels.find((m) => m.id === DEFAULT_CHAT_MODEL) ??
+    allModels[0];
+  const [provider] = selectedModel?.id?.split("/") ?? [""];
 
-  // Provider display names
   const providerNames: Record<string, string> = {
     anthropic: "Anthropic",
     openai: "OpenAI",
     google: "Google",
     xai: "xAI",
+    "x-ai": "xAI",
+    meta: "Meta",
+    "meta-llama": "Meta",
+    deepseek: "DeepSeek",
+    mistral: "Mistral",
+    mistralai: "Mistral",
+    qwen: "Qwen",
     reasoning: "Reasoning",
+  };
+
+  const handleAddModel = async () => {
+    const trimmed = newModelId.trim();
+    if (!trimmed) return;
+    if (!trimmed.includes("/")) {
+      toast.error("Model ID must be in format: provider/model-name");
+      return;
+    }
+    const added = await addModel(trimmed);
+    if (added) {
+      setNewModelId("");
+      setAddingModel(false);
+    }
   };
 
   return (
@@ -490,7 +504,7 @@ function PureModelSelectorCompact({
       <ModelSelectorTrigger asChild>
         <Button className="h-8 w-[200px] justify-between px-2" variant="ghost">
           {provider && <ModelSelectorLogo provider={provider} />}
-          <ModelSelectorName>{selectedModel.name}</ModelSelectorName>
+          <ModelSelectorName>{selectedModel?.name ?? "Select model"}</ModelSelectorName>
         </Button>
       </ModelSelectorTrigger>
       <ModelSelectorContent>
@@ -509,22 +523,71 @@ function PureModelSelectorCompact({
                       key={model.id}
                       onSelect={() => {
                         onModelChange?.(model.id);
-                        setCookie("chat-model", model.id);
+                        selectModel(model.id);
                         setOpen(false);
                       }}
                       value={model.id}
                     >
                       <ModelSelectorLogo provider={logoProvider} />
                       <ModelSelectorName>{model.name}</ModelSelectorName>
-                      {model.id === selectedModel.id && (
-                        <CheckIcon className="ml-auto size-4" />
-                      )}
+                      <span className="ml-auto flex items-center gap-1">
+                        {model.id === selectedModel?.id && (
+                          <CheckIcon className="size-4" />
+                        )}
+                        <button
+                          className="size-4 rounded text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100 group-data-[highlighted]:opacity-100"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            removeModel(model.id);
+                          }}
+                          type="button"
+                        >
+                          ×
+                        </button>
+                      </span>
                     </ModelSelectorItem>
                   );
                 })}
               </ModelSelectorGroup>
             )
           )}
+
+          {/* Add custom model section */}
+          <ModelSelectorGroup heading="Custom">
+            {addingModel ? (
+              <div className="flex items-center gap-1 px-2 py-1.5">
+                <input
+                  autoFocus
+                  className="flex-1 rounded border border-border bg-background px-2 py-1 text-sm outline-none placeholder:text-muted-foreground"
+                  onChange={(e) => setNewModelId(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleAddModel();
+                    if (e.key === "Escape") setAddingModel(false);
+                  }}
+                  placeholder="provider/model-id"
+                  value={newModelId}
+                />
+                <Button
+                  className="h-7 px-2 text-xs"
+                  onClick={handleAddModel}
+                  size="sm"
+                  variant="outline"
+                >
+                  Add
+                </Button>
+              </div>
+            ) : (
+              <ModelSelectorItem
+                onSelect={() => {
+                  setAddingModel(true);
+                }}
+                value="__add_model__"
+              >
+                <span className="text-muted-foreground">+ Add model by ID</span>
+              </ModelSelectorItem>
+            )}
+          </ModelSelectorGroup>
         </ModelSelectorList>
       </ModelSelectorContent>
     </ModelSelector>

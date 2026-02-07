@@ -24,6 +24,7 @@ import type { Vote } from "@/lib/db/schema";
 import { ChatSDKError } from "@/lib/errors";
 import type { Attachment, ChatMessage } from "@/lib/types";
 import { fetcher, fetchWithErrorHandlers, generateUUID } from "@/lib/utils";
+import { useUserModels } from "@/hooks/use-user-models";
 import { Artifact } from "./artifact";
 import { useDataStream } from "./data-stream-provider";
 import { Messages } from "./messages";
@@ -70,8 +71,16 @@ export function Chat({
 
   const [input, setInput] = useState<string>("");
   const [showCreditCardAlert, setShowCreditCardAlert] = useState(false);
+  const { selectedModelId: dbModelId } = useUserModels();
   const [currentModelId, setCurrentModelId] = useState(initialChatModel);
   const currentModelIdRef = useRef(currentModelId);
+
+  // Sync with DB-backed selection once it loads
+  useEffect(() => {
+    if (dbModelId) {
+      setCurrentModelId(dbModelId);
+    }
+  }, [dbModelId]);
 
   useEffect(() => {
     currentModelIdRef.current = currentModelId;
@@ -191,7 +200,6 @@ export function Chat({
         <ChatHeader
           chatId={id}
           isReadonly={isReadonly}
-          selectedVisibilityType={initialVisibilityType}
         />
 
         <Messages

@@ -1,4 +1,5 @@
-// Curated list of top models from Vercel AI Gateway
+// Default models available via OpenRouter
+// Users can add/remove models from the UI using OpenRouter model IDs
 export const DEFAULT_CHAT_MODEL = "google/gemini-2.5-flash-lite";
 
 export type ChatModel = {
@@ -8,20 +9,9 @@ export type ChatModel = {
   description: string;
 };
 
-export const chatModels: ChatModel[] = [
+// These are the built-in defaults. Custom models are stored in localStorage.
+export const defaultChatModels: ChatModel[] = [
   // Anthropic
-  {
-    id: "anthropic/claude-haiku-4.5",
-    name: "Claude Haiku 4.5",
-    provider: "anthropic",
-    description: "Fast and affordable, great for everyday tasks",
-  },
-  {
-    id: "anthropic/claude-sonnet-4.5",
-    name: "Claude Sonnet 4.5",
-    provider: "anthropic",
-    description: "Best balance of speed, intelligence, and cost",
-  },
   {
     id: "anthropic/claude-opus-4.5",
     name: "Claude Opus 4.5",
@@ -30,8 +20,8 @@ export const chatModels: ChatModel[] = [
   },
   // OpenAI
   {
-    id: "openai/gpt-4.1-mini",
-    name: "GPT-4.1 Mini",
+    id: "openai/gpt-4.1-nano",
+    name: "GPT-4.1 Nano",
     provider: "openai",
     description: "Fast and cost-effective for simple tasks",
   },
@@ -49,41 +39,73 @@ export const chatModels: ChatModel[] = [
     description: "Ultra fast and affordable",
   },
   {
+    id: "google/gemini-3-flash-preview",
+    name: "Gemini 3 Flash Preview",
+    provider: "google",
+    description: "Fast reasoning and agentic workflows",
+  },
+  {
     id: "google/gemini-3-pro-preview",
-    name: "Gemini 3 Pro",
+    name: "Gemini 3 Pro Preview",
     provider: "google",
     description: "Most capable Google model",
   },
   // xAI
   {
-    id: "xai/grok-4.1-fast-non-reasoning",
+    id: "x-ai/grok-4.1-fast",
     name: "Grok 4.1 Fast",
     provider: "xai",
-    description: "Fast with 30K context",
+    description: "Fast with 2M context window",
   },
-  // Reasoning models (extended thinking)
+  // Meta
   {
-    id: "anthropic/claude-3.7-sonnet-thinking",
-    name: "Claude 3.7 Sonnet",
-    provider: "reasoning",
-    description: "Extended thinking for complex problems",
+    id: "meta-llama/llama-4-scout",
+    name: "Llama 4 Scout",
+    provider: "meta",
+    description: "Open-source multimodal, 10M context",
   },
+  // DeepSeek
   {
-    id: "xai/grok-code-fast-1-thinking",
-    name: "Grok Code Fast",
-    provider: "reasoning",
-    description: "Reasoning optimized for code",
+    id: "deepseek/deepseek-v3.2",
+    name: "DeepSeek V3.2",
+    provider: "deepseek",
+    description: "Strong reasoning at low cost",
   },
 ];
 
+// backward compat: chatModels is used by the server-side code
+export const chatModels = defaultChatModels;
+
+// Helper to extract provider from model ID
+export function getProviderFromId(id: string): string {
+  const prefix = id.split("/")[0];
+  const providerMap: Record<string, string> = {
+    "anthropic": "anthropic",
+    "openai": "openai",
+    "google": "google",
+    "x-ai": "xai",
+    "meta-llama": "meta",
+    "deepseek": "deepseek",
+    "mistralai": "mistral",
+    "qwen": "qwen",
+    "moonshotai": "moonshot",
+    "minimax": "minimax",
+  };
+  return providerMap[prefix] || prefix;
+}
+
 // Group models by provider for UI
-export const modelsByProvider = chatModels.reduce(
-  (acc, model) => {
-    if (!acc[model.provider]) {
-      acc[model.provider] = [];
-    }
-    acc[model.provider].push(model);
-    return acc;
-  },
-  {} as Record<string, ChatModel[]>
-);
+export function groupModelsByProvider(models: ChatModel[]) {
+  return models.reduce(
+    (acc, model) => {
+      if (!acc[model.provider]) {
+        acc[model.provider] = [];
+      }
+      acc[model.provider].push(model);
+      return acc;
+    },
+    {} as Record<string, ChatModel[]>,
+  );
+}
+
+export const modelsByProvider = groupModelsByProvider(defaultChatModels);
