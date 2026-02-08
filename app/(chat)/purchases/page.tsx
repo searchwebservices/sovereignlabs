@@ -166,8 +166,6 @@ export default function PurchasesPage() {
   return (
     <div className="flex h-dvh flex-col overflow-y-auto">
       <LabPageHeader
-        title="Purchases"
-        description="Track devices and parts that need to be purchased"
         actions={
           <div className="flex items-center gap-2">
             <Select value={statusFilter} onValueChange={setStatusFilter}>

@@ -40,8 +40,6 @@ export default function DashboardPage() {
   return (
     <div className="flex h-dvh flex-col overflow-y-auto">
       <LabPageHeader
-        title="Dashboard"
-        description="Overview of your Sovereign Labs"
         actions={
           <Button asChild size="sm">
             <Link href="/">

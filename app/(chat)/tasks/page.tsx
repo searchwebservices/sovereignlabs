@@ -132,8 +132,6 @@ export default function TasksPage() {
   return (
     <div className="flex h-dvh flex-col overflow-y-auto">
       <LabPageHeader
-        title="Tasks"
-        description="Delegate to-dos across the team"
         actions={
           <Button size="sm" onClick={() => setShowCreate(true)}>
             <Plus className="mr-1.5 size-4" />

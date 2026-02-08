@@ -27,7 +27,7 @@ import { StatusBadge } from "@/components/lab/status-badge";
 import { PartForm } from "@/components/lab/part-form";
 import { usePart } from "@/hooks/use-parts";
 import { partsApi } from "@/lib/supabase/api";
-import { getPartCategoryIcon, getPartCategoryLabel } from "@/lib/lab-icons";
+import { getPartCategoryLabel } from "@/lib/lab-icons";
 import { getDeviceTypeIcon } from "@/lib/lab-icons";
 import type { PartStatus } from "@/lib/types/lab";
 
@@ -71,9 +71,6 @@ export default function PartDetailPage({
   return (
     <div className="flex h-dvh flex-col overflow-y-auto">
       <LabPageHeader
-        title={part.name}
-        subtitle={part.category ? getPartCategoryLabel(part.category) : undefined}
-        icon={getPartCategoryIcon(part.category)}
         backHref="/parts"
         actions={
           <div className="flex items-center gap-2">

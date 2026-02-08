@@ -26,7 +26,7 @@ import { StatusBadge } from "@/components/lab/status-badge";
 import { DeviceForm } from "@/components/lab/device-form";
 import { useDevice } from "@/hooks/use-devices";
 import { devicesApi } from "@/lib/supabase/api";
-import { getDeviceTypeIcon, getDeviceTypeLabel } from "@/lib/lab-icons";
+import { getDeviceTypeLabel } from "@/lib/lab-icons";
 import { getPartCategoryIcon } from "@/lib/lab-icons";
 import type { DeviceStatus } from "@/lib/types/lab";
 
@@ -70,9 +70,6 @@ export default function DeviceDetailPage({
   return (
     <div className="flex h-dvh flex-col overflow-y-auto">
       <LabPageHeader
-        title={device.name}
-        subtitle={device.type ? getDeviceTypeLabel(device.type) : undefined}
-        icon={getDeviceTypeIcon(device.type)}
         backHref="/devices"
         actions={
           <div className="flex items-center gap-2">

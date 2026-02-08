@@ -100,8 +100,6 @@ export default function PartsPage() {
   return (
     <div className="flex h-dvh flex-col overflow-y-auto">
       <LabPageHeader
-        title="Parts"
-        description="Track components and inventory"
         actions={
           <Button size="sm" onClick={() => setShowCreate(true)}>
             <Plus className="mr-1.5 size-4" />

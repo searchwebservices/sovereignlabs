@@ -104,8 +104,6 @@ export default function DevicesPage() {
   return (
     <div className="flex h-dvh flex-col overflow-y-auto">
       <LabPageHeader
-        title="Devices"
-        description="Manage lab equipment and hardware"
         actions={
           <div className="flex items-center gap-2">
             <Select value={statusFilter} onValueChange={setStatusFilter}>

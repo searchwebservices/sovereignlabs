@@ -36,8 +36,6 @@ export default function InitiativesPage() {
   return (
     <div className="flex h-dvh flex-col overflow-y-auto">
       <LabPageHeader
-        title="Initiatives"
-        description="Research projects and resource allocation"
         actions={
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1 rounded-lg bg-muted p-1">

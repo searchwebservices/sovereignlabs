@@ -78,7 +78,6 @@ export default function InitiativeDetailPage({
   return (
     <div className="flex h-dvh flex-col overflow-y-auto">
       <LabPageHeader
-        title={initiative.name}
         backHref="/initiatives"
         actions={
           <div className="flex items-center gap-2">
