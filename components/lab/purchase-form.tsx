@@ -204,12 +204,12 @@ export function PurchaseForm({
 
         <div className="space-y-2">
           <Label htmlFor="requestedBy">Requested By</Label>
-          <Select value={requestedBy} onValueChange={setRequestedBy}>
+          <Select value={requestedBy || "__none__"} onValueChange={(v) => setRequestedBy(v === "__none__" ? "" : v)}>
             <SelectTrigger>
               <SelectValue placeholder="Select person..." />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">None</SelectItem>
+              <SelectItem value="__none__">None</SelectItem>
               {(teamMembers || []).map((m) => (
                 <SelectItem key={m.id} value={m.id}>
                   {m.name}
@@ -221,12 +221,12 @@ export function PurchaseForm({
 
         <div className="space-y-2">
           <Label htmlFor="linkedDevice">Link to Device</Label>
-          <Select value={linkedDeviceId} onValueChange={setLinkedDeviceId}>
+          <Select value={linkedDeviceId || "__none__"} onValueChange={(v) => setLinkedDeviceId(v === "__none__" ? "" : v)}>
             <SelectTrigger>
               <SelectValue placeholder="None" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">None</SelectItem>
+              <SelectItem value="__none__">None</SelectItem>
               {(devices || []).map((d) => (
                 <SelectItem key={d.id} value={d.id}>
                   {d.name}
@@ -238,12 +238,12 @@ export function PurchaseForm({
 
         <div className="space-y-2">
           <Label htmlFor="linkedPart">Link to Part</Label>
-          <Select value={linkedPartId} onValueChange={setLinkedPartId}>
+          <Select value={linkedPartId || "__none__"} onValueChange={(v) => setLinkedPartId(v === "__none__" ? "" : v)}>
             <SelectTrigger>
               <SelectValue placeholder="None" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">None</SelectItem>
+              <SelectItem value="__none__">None</SelectItem>
               {(parts || []).map((p) => (
                 <SelectItem key={p.id} value={p.id}>
                   {p.name}

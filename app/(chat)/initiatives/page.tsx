@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -211,6 +212,7 @@ export default function InitiativesPage() {
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>New Initiative</DialogTitle>
+            <DialogDescription className="sr-only">Fill in the details to create a new initiative.</DialogDescription>
           </DialogHeader>
           <InitiativeForm
             onSuccess={() => {

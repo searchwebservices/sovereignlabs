@@ -127,12 +127,12 @@ export function TaskForm({ task, onSuccess, onCancel }: TaskFormProps) {
 
         <div className="space-y-2">
           <Label htmlFor="assignedTo">Assign To</Label>
-          <Select value={assignedTo} onValueChange={setAssignedTo}>
+          <Select value={assignedTo || "__none__"} onValueChange={(v) => setAssignedTo(v === "__none__" ? "" : v)}>
             <SelectTrigger>
               <SelectValue placeholder="Unassigned" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Unassigned</SelectItem>
+              <SelectItem value="__none__">Unassigned</SelectItem>
               {(teamMembers || []).map((m) => (
                 <SelectItem key={m.id} value={m.id}>
                   {m.name}

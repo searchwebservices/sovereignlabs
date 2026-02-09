@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -199,6 +200,7 @@ export default function TasksPage() {
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Create New Task</DialogTitle>
+            <DialogDescription className="sr-only">Fill in the details to create a new task.</DialogDescription>
           </DialogHeader>
           <TaskForm
             onSuccess={() => {
@@ -218,6 +220,7 @@ export default function TasksPage() {
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Edit Task</DialogTitle>
+            <DialogDescription className="sr-only">Modify the task details below.</DialogDescription>
           </DialogHeader>
           {editingTask && (
             <TaskForm

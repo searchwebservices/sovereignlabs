@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -158,6 +159,7 @@ export default function DevicesPage() {
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Add New Device</DialogTitle>
+            <DialogDescription className="sr-only">Fill in the details to add a new device.</DialogDescription>
           </DialogHeader>
           <DeviceForm
             onSuccess={() => {

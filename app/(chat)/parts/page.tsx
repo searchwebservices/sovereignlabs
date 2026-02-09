@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -162,6 +163,7 @@ export default function PartsPage() {
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Add New Part</DialogTitle>
+            <DialogDescription className="sr-only">Fill in the details to add a new part.</DialogDescription>
           </DialogHeader>
           <PartForm
             onSuccess={() => {

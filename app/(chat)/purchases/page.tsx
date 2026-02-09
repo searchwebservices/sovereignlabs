@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -238,6 +239,7 @@ export default function PurchasesPage() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Add New Purchase</DialogTitle>
+            <DialogDescription className="sr-only">Fill in the details to add a new purchase.</DialogDescription>
           </DialogHeader>
           <PurchaseForm
             onSuccess={() => {
@@ -257,6 +259,7 @@ export default function PurchasesPage() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Edit Purchase</DialogTitle>
+            <DialogDescription className="sr-only">Modify the purchase details below.</DialogDescription>
           </DialogHeader>
           {editingPurchase && (
             <PurchaseForm
