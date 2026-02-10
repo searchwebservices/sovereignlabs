@@ -32,9 +32,10 @@ export async function updateSession(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  // Allow login page for unauthenticated users
-  if (pathname === "/login") {
-    if (user) {
+  // Allow login page and public pages for unauthenticated users
+  const publicPaths = ["/login", "/expenses", "/research", "/members"];
+  if (publicPaths.includes(pathname)) {
+    if (user && pathname === "/login") {
       // Already logged in — redirect to home
       const url = request.nextUrl.clone();
       url.pathname = "/";
