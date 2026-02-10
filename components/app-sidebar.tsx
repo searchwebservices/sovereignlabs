@@ -9,11 +9,13 @@ import {
   Cpu,
   Puzzle,
   Rocket,
-  MessageSquare,
   ChevronDown,
   ChevronRight,
   CheckSquare,
   ShoppingCart,
+  Receipt,
+  FlaskConical,
+  Users,
 } from "lucide-react";
 import { PlusIcon } from "@/components/icons";
 import { SidebarHistory } from "@/components/sidebar-history";
@@ -41,6 +43,9 @@ const labNavItems = [
   { href: "/initiatives", label: "Initiatives", icon: Rocket },
   { href: "/tasks", label: "Tasks", icon: CheckSquare },
   { href: "/purchases", label: "Purchases", icon: ShoppingCart },
+  { href: "/expenses", label: "Expenses", icon: Receipt },
+  { href: "/research", label: "Research", icon: FlaskConical },
+  { href: "/members", label: "Members", icon: Users },
 ];
 
 export function AppSidebar({ user }: { user: User | undefined }) {
