@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Plus, CheckSquare, Calendar, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useSWRConfig } from "swr";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -22,6 +23,7 @@ import { useTasks } from "@/hooks/use-tasks";
 import type { TaskWithAssignee, TaskStatus, TaskPriority } from "@/lib/types/lab";
 
 export default function TasksPage() {
+  const router = useRouter();
   const { data: tasks, isLoading, mutate } = useTasks();
   const { mutate: globalMutate } = useSWRConfig();
   const [showCreate, setShowCreate] = useState(false);
@@ -190,7 +192,7 @@ export default function TasksPage() {
             columns={columns}
             searchKey="title"
             searchPlaceholder="Search tasks..."
-            onRowClick={(t) => setEditingTask(t)}
+            onRowClick={(t) => router.push(`/tasks/${t.id}`)}
           />
         )}
       </div>
