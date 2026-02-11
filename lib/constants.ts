@@ -5,3 +5,6 @@ export const isTestEnvironment = Boolean(
     process.env.PLAYWRIGHT ||
     process.env.CI_PLAYWRIGHT
 );
+
+export const AI_ASSISTANT_MEMBER_ID =
+  "00000000-0000-0000-0000-000000000001";

@@ -25,9 +25,12 @@ interface InitiativeFormProps {
 export function InitiativeForm({ initiative, onSuccess, onCancel }: InitiativeFormProps) {
   const { mutate } = useSWRConfig();
   const [loading, setLoading] = useState(false);
+
   const [name, setName] = useState(initiative?.name || "");
   const [description, setDescription] = useState(initiative?.description || "");
-  const [status, setStatus] = useState<InitiativeStatus>(initiative?.status || "planning");
+  const [status, setStatus] = useState<InitiativeStatus>(
+    initiative?.status || "suggested"
+  );
   const [startDate, setStartDate] = useState(initiative?.start_date || "");
   const [targetDate, setTargetDate] = useState(initiative?.target_date || "");
 
@@ -46,7 +49,10 @@ export function InitiativeForm({ initiative, onSuccess, onCancel }: InitiativeFo
         status,
         start_date: startDate || null,
         target_date: targetDate || null,
-        completion_date: initiative?.completion_date || null,
+        completion_date:
+          status === "finalized"
+            ? initiative?.completion_date || new Date().toISOString()
+            : null,
       };
 
       if (initiative) {
@@ -80,9 +86,10 @@ export function InitiativeForm({ initiative, onSuccess, onCancel }: InitiativeFo
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="planning">Planning</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
+              <SelectItem value="suggested">Suggested</SelectItem>
+              <SelectItem value="approved">Approved</SelectItem>
+              <SelectItem value="executing">Executing</SelectItem>
+              <SelectItem value="finalized">Finalized</SelectItem>
               <SelectItem value="archived">Archived</SelectItem>
             </SelectContent>
           </Select>

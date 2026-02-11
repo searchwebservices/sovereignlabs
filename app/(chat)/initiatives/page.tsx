@@ -19,9 +19,10 @@ import { useInitiatives } from "@/hooks/use-initiatives";
 import type { Initiative, InitiativeStatus } from "@/lib/types/lab";
 
 const statusColumns: { key: InitiativeStatus; label: string }[] = [
-  { key: "planning", label: "Planning" },
-  { key: "active", label: "Active" },
-  { key: "completed", label: "Completed" },
+  { key: "suggested", label: "Suggested" },
+  { key: "approved", label: "Approved" },
+  { key: "executing", label: "Executing" },
+  { key: "finalized", label: "Finalized" },
   { key: "archived", label: "Archived" },
 ];
 

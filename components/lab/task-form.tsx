@@ -136,6 +136,7 @@ export function TaskForm({ task, onSuccess, onCancel }: TaskFormProps) {
               {(teamMembers || []).map((m) => (
                 <SelectItem key={m.id} value={m.id}>
                   {m.name}
+                  {m.is_ai ? " (AI)" : ""}
                   {m.role ? ` (${m.role})` : ""}
                 </SelectItem>
               ))}

@@ -5,7 +5,9 @@ import type {
   PartStatus,
   InitiativeStatus,
   TaskStatus,
+  TaskMentionStatus,
   PurchaseStatus,
+  ResearchDocumentStatus,
 } from "@/lib/types/lab";
 
 type Status =
@@ -13,7 +15,9 @@ type Status =
   | PartStatus
   | InitiativeStatus
   | TaskStatus
-  | PurchaseStatus;
+  | TaskMentionStatus
+  | PurchaseStatus
+  | ResearchDocumentStatus;
 
 const statusConfig: Record<
   string,
@@ -46,16 +50,20 @@ const statusConfig: Record<
     className: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
   },
   // Initiative statuses
-  planning: {
-    label: "Planning",
+  suggested: {
+    label: "Suggested",
     className: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400",
   },
-  active: {
-    label: "Active",
+  approved: {
+    label: "Approved",
+    className: "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400",
+  },
+  executing: {
+    label: "Executing",
     className: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
   },
-  completed: {
-    label: "Completed",
+  finalized: {
+    label: "Finalized",
     className: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400",
   },
   archived: {
@@ -75,14 +83,23 @@ const statusConfig: Record<
     label: "Done",
     className: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400",
   },
+  // Task mention statuses
+  new: {
+    label: "New",
+    className: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400",
+  },
+  seen: {
+    label: "Seen",
+    className: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
+  },
+  resolved: {
+    label: "Resolved",
+    className: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400",
+  },
   // Purchase statuses
   needed: {
     label: "Needed",
     className: "bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400",
-  },
-  approved: {
-    label: "Approved",
-    className: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400",
   },
   ordered: {
     label: "Ordered",
@@ -99,6 +116,15 @@ const statusConfig: Record<
   cancelled: {
     label: "Cancelled",
     className: "bg-gray-100 text-gray-600 dark:bg-gray-800/50 dark:text-gray-400",
+  },
+  // Research document statuses
+  draft: {
+    label: "Draft",
+    className: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
+  },
+  final: {
+    label: "Final",
+    className: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400",
   },
 };
 

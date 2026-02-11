@@ -318,63 +318,63 @@ INSERT INTO initiatives (name, description, status, start_date, target_date) VAL
 
 ('Moltbot / Clawdbot Server', 
  'Deploy primary AI agent environment. Termux + proot-distro Ubuntu 24.04. Node.js apps, MQTT, 5-8 agent sessions. Galaxy S22 primary, S20+ failover. P0 — Sprint 1.',
- 'planning', '2026-02-06', NULL),
+ 'suggested', '2026-02-06', NULL),
 
 ('Searchbot (OpenClaw)',
  'AI chatbot/agent for the lab and Search Web Services. Core conversational AI product. Hosted on Galaxy S22. P0 — Sprint 1.',
- 'active', '2026-02-06', NULL),
+ 'executing', '2026-02-06', NULL),
 
 ('Home Assistant Dashboard',
  'Jailbreak Echo Show 8, install LineageOS 18.1, deploy as Home Assistant dashboard with 8" display + speakers. URGENT. P0 — Sprint 1.',
- 'active', '2026-02-06', NULL),
+ 'executing', '2026-02-06', NULL),
 
 ('Sovereign RFID Inventory',
  'Privacy-first offline UHF RFID tracking. Chafon reader + ESP32 + Home Assistant + Grocy. Target: warehouses, wine cellars. P1 — Sprint 1.',
- 'planning', NULL, NULL),
+ 'suggested', NULL, NULL),
 
 ('Kombucha Fermentation Sensor',
  'Automated pH/Brix/temp sensor suite for fermentation. ESP32 + Atlas Scientific. No cloud dependency. P2 — Sprint 2.',
- 'planning', NULL, NULL),
+ 'suggested', NULL, NULL),
 
 ('Handheld Local AI NPU',
  'Moonshot: RK3588-based handheld running local LLMs + Whisper STT. Offline voice notes for professionals. P3 — Sprint 3.',
- 'planning', NULL, NULL),
+ 'suggested', NULL, NULL),
 
 ('Lab Inventory Dashboard',
  'Web app to manage devices, parts, and initiatives for the lab. Built by Bay. P1 — Sprint 1.',
- 'active', '2026-02-06', NULL),
+ 'executing', '2026-02-06', NULL),
 
 ('MQTT Broker Deployment',
  'Dedicated Mosquitto MQTT broker for sensor data and device communication. Running on Pixel 3 XL. P1 — Sprint 1.',
- 'planning', NULL, NULL),
+ 'suggested', NULL, NULL),
 
 ('iPhone X Parts Teardown',
  'Strip iPhone X: OLED display, cameras, Taptic Engine, battery. Recycle logic board for precious metals. P1 — Sprint 1.',
- 'planning', '2026-02-06', NULL),
+ 'suggested', '2026-02-06', NULL),
 
 ('Tablet Teardown (Pro13)',
  'Open generic Pro13 tablet to identify internal components. Strip usable parts (LCD, battery). P2 — Sprint 1.',
- 'planning', '2026-02-06', NULL),
+ 'suggested', '2026-02-06', NULL),
 
 ('Smartwatch Liquidation',
  'List Apple Watches ($50-100 each) and Garmin ($30-80) for sale. Fund lab equipment purchases. P2 — Sprint 1.',
- 'planning', NULL, NULL),
+ 'suggested', NULL, NULL),
 
 ('4G Backup Internet',
  'Configure Qilive U2403 phone as USB-tethered 4G modem for internet failover. P3 — Sprint 1.',
- 'planning', NULL, NULL),
+ 'suggested', NULL, NULL),
 
 ('x86 Mini PC Server',
  'Acquire barebones Intel NUC or mini PC to use SK hynix DDR4 RAM. Better Docker/x86 compatibility. P2 — Sprint 2.',
- 'planning', NULL, NULL),
+ 'suggested', NULL, NULL),
 
 ('Power Bank UPS Testing',
  'Test both power banks (Chargeworx + PocketJuice) for pass-through charging. Deploy as UPS if confirmed. P1 — Sprint 1.',
- 'planning', '2026-02-06', NULL),
+ 'suggested', '2026-02-06', NULL),
 
 ('Hard Drive Integration',
  'Bay''s dad donating hard drives. Assess capacity/health and integrate into lab storage infrastructure. P2 — Sprint 1.',
- 'planning', NULL, NULL);
+ 'suggested', NULL, NULL);
 
 
 -- ============================================================

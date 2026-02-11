@@ -2,12 +2,14 @@
 export type DeviceStatus = "available" | "in_use" | "maintenance" | "retired";
 export type PartStatus = "spare" | "attached";
 export type InitiativeStatus =
-  | "planning"
-  | "active"
-  | "completed"
+  | "suggested"
+  | "approved"
+  | "executing"
+  | "finalized"
   | "archived";
 export type TaskStatus = "todo" | "in_progress" | "done";
 export type TaskPriority = "low" | "medium" | "high" | "urgent";
+export type TaskMentionStatus = "new" | "seen" | "resolved";
 export type PurchaseStatus =
   | "needed"
   | "approved"
@@ -15,6 +17,7 @@ export type PurchaseStatus =
   | "shipped"
   | "received"
   | "cancelled";
+export type ResearchDocumentStatus = "draft" | "final";
 
 // ── Core entities ─────────────────────────────────────────────
 export interface Device {
@@ -89,6 +92,7 @@ export interface PartWithDevice extends Part {
 export interface InitiativeWithRelations extends Initiative {
   initiative_devices: (InitiativeDevice & { device: Device })[];
   initiative_parts: (InitiativePart & { part: Part })[];
+  research_documents?: ResearchDocumentWithRelations[];
 }
 
 // ── Team members ──────────────────────────────────────────────
@@ -97,6 +101,7 @@ export interface TeamMember {
   name: string;
   email: string | null;
   role: string | null;
+  is_ai?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -116,6 +121,71 @@ export interface Task {
 
 export interface TaskWithAssignee extends Task {
   assignee: TeamMember | null;
+}
+
+export interface TaskSubtask {
+  id: string;
+  task_id: string;
+  title: string;
+  is_done: boolean;
+  assigned_to: string | null;
+  due_date: string | null;
+  order_index: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TaskSubtaskWithAssignee extends TaskSubtask {
+  assignee: TeamMember | null;
+}
+
+export interface TaskFile {
+  id: string;
+  task_id: string;
+  name: string;
+  url: string;
+  content_type: string | null;
+  file_size: number | null;
+  drive_file_id: string | null;
+  uploaded_by: string | null;
+  created_at: string;
+}
+
+export interface TaskFileWithUploader extends TaskFile {
+  uploaded_by_member: TeamMember | null;
+}
+
+export interface TaskMeeting {
+  id: string;
+  task_id: string;
+  title: string;
+  meeting_date: string | null;
+  meeting_url: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TaskMention {
+  id: string;
+  task_id: string;
+  member_id: string;
+  context: string | null;
+  status: TaskMentionStatus;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TaskMentionWithMember extends TaskMention {
+  member: TeamMember | null;
+  task?: Task | null;
+}
+
+export interface TaskWithDetails extends TaskWithAssignee {
+  subtasks: TaskSubtaskWithAssignee[];
+  files: TaskFileWithUploader[];
+  meetings: TaskMeeting[];
+  mentions: TaskMentionWithMember[];
 }
 
 // ── Purchases ─────────────────────────────────────────────────
@@ -140,6 +210,41 @@ export interface PurchaseWithRelations extends Purchase {
   requester: TeamMember | null;
   linked_device: Device | null;
   linked_part: Part | null;
+}
+
+// ── Research documents ────────────────────────────────────────
+export interface ResearchDocument {
+  id: string;
+  initiative_id: string | null;
+  title: string;
+  summary: string | null;
+  content: string | null;
+  source_document_id: string | null;
+  source_chat_id: string | null;
+  storage_url: string | null;
+  drive_file_id: string | null;
+  status: ResearchDocumentStatus;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ResearchDocumentWithRelations extends ResearchDocument {
+  initiative: Initiative | null;
+  author: TeamMember | null;
+}
+
+// ── Internal drive files ─────────────────────────────────────
+export interface InternalDriveFile {
+  id: string;
+  name: string;
+  content_type: string;
+  size_bytes: number;
+  scope: string;
+  is_public: boolean;
+  created_by_user_id: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 // ── Dashboard stats ───────────────────────────────────────────

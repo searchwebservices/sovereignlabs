@@ -17,7 +17,7 @@ export const queryLabData = tool({
       .string()
       .optional()
       .describe(
-        "Filter by status. Devices: available/in_use/maintenance/retired. Parts: spare/attached. Initiatives: planning/active/completed/archived"
+        "Filter by status. Devices: available/in_use/maintenance/retired. Parts: spare/attached. Initiatives: suggested/approved/executing/finalized/archived"
       ),
     searchTerm: z
       .string()

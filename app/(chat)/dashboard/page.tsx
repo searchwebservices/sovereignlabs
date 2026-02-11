@@ -35,7 +35,12 @@ export default function DashboardPage() {
 
   const recentDevices = devices?.slice(0, 5) || [];
   const activeInitiatives =
-    initiatives?.filter((i) => i.status === "active" || i.status === "planning") || [];
+    initiatives?.filter(
+      (i) =>
+        i.status === "executing" ||
+        i.status === "approved" ||
+        i.status === "suggested"
+    ) || [];
 
   return (
     <div className="flex h-dvh flex-col overflow-y-auto">

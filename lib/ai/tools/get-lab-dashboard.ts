@@ -53,9 +53,10 @@ export const getLabDashboard = tool({
       // Compute initiative stats
       const initiatives = initiativesResult.data;
       const initiativesByStatus = {
-        planning: initiatives.filter((i) => i.status === "planning").length,
-        active: initiatives.filter((i) => i.status === "active").length,
-        completed: initiatives.filter((i) => i.status === "completed").length,
+        suggested: initiatives.filter((i) => i.status === "suggested").length,
+        approved: initiatives.filter((i) => i.status === "approved").length,
+        executing: initiatives.filter((i) => i.status === "executing").length,
+        finalized: initiatives.filter((i) => i.status === "finalized").length,
         archived: initiatives.filter((i) => i.status === "archived").length,
         total: initiatives.length,
       };

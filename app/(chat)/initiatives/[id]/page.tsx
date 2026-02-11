@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
 import {
+  BookOpen,
   Pencil,
   Trash2,
   Calendar,
@@ -31,6 +32,7 @@ import {
 import { LabPageHeader } from "@/components/lab/lab-page-header";
 import { StatusBadge } from "@/components/lab/status-badge";
 import { InitiativeForm } from "@/components/lab/initiative-form";
+import { ResearchDocumentForm } from "@/components/lab/research-document-form";
 import { useInitiative } from "@/hooks/use-initiatives";
 import { initiativesApi } from "@/lib/supabase/api";
 import type { InitiativeStatus } from "@/lib/types/lab";
@@ -45,6 +47,7 @@ export default function InitiativeDetailPage({
   const { data: initiative, isLoading, mutate } = useInitiative(id);
   const [showEdit, setShowEdit] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
+  const [showAddDocument, setShowAddDocument] = useState(false);
 
   const handleDelete = async () => {
     try {
@@ -74,6 +77,8 @@ export default function InitiativeDetailPage({
 
   const devices = initiative.initiative_devices || [];
   const parts = initiative.initiative_parts || [];
+  const researchDocuments = initiative.research_documents || [];
+  const isFinalized = initiative.status === "finalized";
 
   return (
     <div className="flex h-dvh flex-col overflow-y-auto">
@@ -135,7 +140,7 @@ export default function InitiativeDetailPage({
             </div>
             <div className="flex items-center gap-2 text-sm">
               <Calendar className="size-4 text-muted-foreground" />
-              <span className="text-muted-foreground">Completed:</span>
+              <span className="text-muted-foreground">Finalized:</span>
               <span className="font-medium">
                 {initiative.completion_date
                   ? new Date(
@@ -225,6 +230,69 @@ export default function InitiativeDetailPage({
             </div>
           </div>
         </div>
+
+        <div className="rounded-xl border bg-card">
+          <div className="flex items-center justify-between border-b px-5 py-3">
+            <h2 className="text-sm font-semibold">
+              Research Drive Documents ({researchDocuments.length})
+            </h2>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setShowAddDocument(true)}
+              disabled={!isFinalized}
+            >
+              <BookOpen className="mr-1.5 size-4" />
+              Add Document
+            </Button>
+          </div>
+          {!isFinalized ? (
+            <p className="px-5 py-5 text-sm text-muted-foreground">
+              Finalize this initiative to start storing canonical research
+              documents in the drive.
+            </p>
+          ) : researchDocuments.length === 0 ? (
+            <p className="px-5 py-5 text-sm text-muted-foreground">
+              No research-drive documents yet.
+            </p>
+          ) : (
+            <div className="divide-y">
+              {researchDocuments.map((document) => (
+                <div key={document.id} className="px-5 py-3">
+                  <p className="text-sm font-medium">{document.title}</p>
+                  {document.summary && (
+                    <p className="text-xs text-muted-foreground">
+                      {document.summary}
+                    </p>
+                  )}
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Status: <StatusBadge status={document.status} />
+                  </p>
+                  {document.storage_url && (
+                    <a
+                      href={document.storage_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-1 inline-block text-xs text-blue-600 hover:underline dark:text-blue-400"
+                    >
+                      Open document
+                    </a>
+                  )}
+                  {!document.storage_url && document.drive_file_id && (
+                    <a
+                      href={`/api/drive/files/${document.drive_file_id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-1 inline-block text-xs text-blue-600 hover:underline dark:text-blue-400"
+                    >
+                      Open document
+                    </a>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       <Dialog open={showEdit} onOpenChange={setShowEdit}>
@@ -260,6 +328,22 @@ export default function InitiativeDetailPage({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={showAddDocument} onOpenChange={setShowAddDocument}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Save To Research Drive</DialogTitle>
+          </DialogHeader>
+          <ResearchDocumentForm
+            defaultInitiativeId={initiative.id}
+            onSuccess={() => {
+              setShowAddDocument(false);
+              mutate();
+            }}
+            onCancel={() => setShowAddDocument(false)}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

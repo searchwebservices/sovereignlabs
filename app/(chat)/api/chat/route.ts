@@ -21,7 +21,7 @@ import { managePart } from "@/lib/ai/tools/manage-part";
 import { queryLabData } from "@/lib/ai/tools/query-lab-data";
 import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
 import { updateDocument } from "@/lib/ai/tools/update-document";
-import { isProductionEnvironment } from "@/lib/constants";
+import { AI_ASSISTANT_MEMBER_ID, isProductionEnvironment } from "@/lib/constants";
 import {
   createStreamId,
   deleteChatById,
@@ -35,12 +35,16 @@ import {
 } from "@/lib/db/queries";
 import type { DBMessage } from "@/lib/db/schema";
 import { ChatSDKError } from "@/lib/errors";
+import { serverTaskMentionsApi } from "@/lib/supabase/server-api";
 import type { ChatMessage } from "@/lib/types";
+import type { TaskMentionStatus, TaskMentionWithMember } from "@/lib/types/lab";
 import { convertToUIMessages, generateUUID } from "@/lib/utils";
 import { generateTitleFromUserMessage } from "../../actions";
 import { type PostRequestBody, postRequestBodySchema } from "./schema";
 
 export const maxDuration = 60;
+const AI_ASSIGNMENT_STATUS_FILTER: TaskMentionStatus[] = ["new", "seen"];
+const AI_ASSIGNMENT_LIMIT = 5;
 
 function getStreamContext() {
   try {
@@ -51,6 +55,110 @@ function getStreamContext() {
 }
 
 export { getStreamContext };
+
+function truncate(value: string, maxLength: number): string {
+  if (value.length <= maxLength) return value;
+  return `${value.slice(0, maxLength - 1)}...`;
+}
+
+function getDueDateSortValue(dueDate: string | null | undefined): number {
+  if (!dueDate) return Number.POSITIVE_INFINITY;
+  const normalizedDueDate = dueDate.slice(0, 10);
+  const [year, month, day] = normalizedDueDate.split("-").map(Number);
+  if (!year || !month || !day) return Number.POSITIVE_INFINITY;
+  return Date.UTC(year, month - 1, day);
+}
+
+function getDueDateSummary(dueDate: string | null | undefined): string {
+  if (!dueDate) return "none";
+
+  const normalizedDueDate = dueDate.slice(0, 10);
+  const dueUtc = getDueDateSortValue(normalizedDueDate);
+  if (!Number.isFinite(dueUtc)) return dueDate;
+
+  const now = new Date();
+  const todayUtc = Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate()
+  );
+  const diffDays = Math.floor((dueUtc - todayUtc) / 86_400_000);
+
+  if (diffDays < 0) {
+    return `${normalizedDueDate} (overdue ${Math.abs(diffDays)}d)`;
+  }
+  if (diffDays === 0) return `${normalizedDueDate} (today)`;
+  if (diffDays === 1) return `${normalizedDueDate} (tomorrow)`;
+  return `${normalizedDueDate} (in ${diffDays}d)`;
+}
+
+function prioritizeAiMentions(
+  mentions: TaskMentionWithMember[]
+): TaskMentionWithMember[] {
+  return [...mentions].sort((a, b) => {
+    const statusRankA = a.status === "new" ? 0 : 1;
+    const statusRankB = b.status === "new" ? 0 : 1;
+    if (statusRankA !== statusRankB) return statusRankA - statusRankB;
+
+    const dueDateA = getDueDateSortValue(a.task?.due_date);
+    const dueDateB = getDueDateSortValue(b.task?.due_date);
+    if (dueDateA !== dueDateB) return dueDateA - dueDateB;
+
+    return (
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+  });
+}
+
+function buildAiAssignmentContextPrompt(
+  mentions: TaskMentionWithMember[]
+): string | null {
+  if (mentions.length === 0) return null;
+
+  const items = mentions.slice(0, AI_ASSIGNMENT_LIMIT).map((mention, index) => {
+    const taskTitle = truncate(mention.task?.title || "Untitled task", 100);
+    const taskStatus = mention.task?.status || "unknown";
+    const priority = mention.task?.priority || "unknown";
+    const dueDate = getDueDateSummary(mention.task?.due_date);
+    const context = mention.context ? truncate(mention.context, 160) : "none";
+
+    return `${index + 1}. ${taskTitle} | mention=${mention.status} | task=${taskStatus} | priority=${priority} | due=${dueDate} | instruction=${context}`;
+  });
+
+  return [
+    "AI Assignment Inbox (internal operational context):",
+    "- You were explicitly tagged on these tasks.",
+    "- Treat these as assignments when relevant to the user's request.",
+    "- Do not claim completion unless task state is updated via tools/user action.",
+    ...items,
+  ].join("\n");
+}
+
+async function getAiAssignmentContext() {
+  try {
+    const mentions = await serverTaskMentionsApi.getByMember(
+      AI_ASSISTANT_MEMBER_ID,
+      AI_ASSIGNMENT_STATUS_FILTER
+    );
+    const prioritized = prioritizeAiMentions(mentions);
+    const contextPrompt = buildAiAssignmentContextPrompt(prioritized);
+    const mentionIdsToMarkSeen = prioritized
+      .filter((mention) => mention.status === "new")
+      .slice(0, AI_ASSIGNMENT_LIMIT)
+      .map((mention) => mention.id);
+
+    return {
+      contextPrompt,
+      mentionIdsToMarkSeen,
+    };
+  } catch (error) {
+    console.error("Failed to load AI assignment context:", error);
+    return {
+      contextPrompt: null,
+      mentionIdsToMarkSeen: [] as string[],
+    };
+  }
+}
 
 export async function POST(request: Request) {
   let requestBody: PostRequestBody;
@@ -137,13 +245,19 @@ export async function POST(request: Request) {
       selectedChatModel.includes("thinking");
 
     const modelMessages = await convertToModelMessages(uiMessages);
+    const { contextPrompt: aiAssignmentContext, mentionIdsToMarkSeen } =
+      await getAiAssignmentContext();
+    const baseSystemPrompt = systemPrompt({ selectedChatModel, requestHints });
+    const fullSystemPrompt = aiAssignmentContext
+      ? `${baseSystemPrompt}\n\n${aiAssignmentContext}`
+      : baseSystemPrompt;
 
     const stream = createUIMessageStream({
       originalMessages: isToolApprovalFlow ? uiMessages : undefined,
       execute: async ({ writer: dataStream }) => {
         const result = streamText({
           model: getLanguageModel(selectedChatModel),
-          system: systemPrompt({ selectedChatModel, requestHints }),
+          system: fullSystemPrompt,
           messages: modelMessages,
           stopWhen: stepCountIs(5),
           experimental_activeTools: isReasoningModel
@@ -225,6 +339,21 @@ export async function POST(request: Request) {
               chatId: id,
             })),
           });
+        }
+
+        if (finishedMessages.length > 0 && mentionIdsToMarkSeen.length > 0) {
+          await Promise.all(
+            mentionIdsToMarkSeen.map((mentionId) =>
+              serverTaskMentionsApi
+                .update(mentionId, { status: "seen" })
+                .catch((error) => {
+                  console.error(
+                    `Failed to update mention ${mentionId} to seen:`,
+                    error
+                  );
+                })
+            )
+          );
         }
       },
       onError: () => "Oops, an error occurred!",

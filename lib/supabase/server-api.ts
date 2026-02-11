@@ -10,14 +10,43 @@ import type {
   LabStats,
   TeamMember,
   Task,
+  TaskFile,
+  TaskMeeting,
+  TaskMention,
+  TaskMentionStatus,
+  TaskMentionWithMember,
+  TaskSubtask,
   TaskWithAssignee,
+  TaskWithDetails,
   Purchase,
   PurchaseWithRelations,
+  ResearchDocument,
+  ResearchDocumentWithRelations,
+  InternalDriveFile,
   UserModel,
 } from "@/lib/types/lab";
 
 function getSupabase() {
   return createAdminClient();
+}
+
+function bufferToByteaHex(buffer: Buffer): string {
+  return `\\x${buffer.toString("hex")}`;
+}
+
+function byteaToBuffer(value: unknown): Buffer {
+  if (Buffer.isBuffer(value)) {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    if (value.startsWith("\\x")) {
+      return Buffer.from(value.slice(2), "hex");
+    }
+    return Buffer.from(value, "base64");
+  }
+
+  throw new Error("Unsupported internal drive file payload");
 }
 
 // ── Devices API ───────────────────────────────────────────────
@@ -204,7 +233,7 @@ export const serverInitiativesApi = {
     const { data, error } = await supabase
       .from("initiatives")
       .select("*")
-      .in("status", ["planning", "active"])
+      .in("status", ["suggested", "approved", "executing"])
       .order("created_at", { ascending: false });
     if (error) throw error;
     return data as Initiative[];
@@ -212,25 +241,54 @@ export const serverInitiativesApi = {
 
   getById: async (id: string): Promise<InitiativeWithRelations> => {
     const supabase = getSupabase();
-    const { data, error } = await supabase
-      .from("initiatives")
-      .select(
+    try {
+      const { data, error } = await supabase
+        .from("initiatives")
+        .select(
+          `
+          *,
+          initiative_devices(
+            *,
+            device:devices(*)
+          ),
+          initiative_parts(
+            *,
+            part:parts(*)
+          ),
+          research_documents(
+            *,
+            author:team_members(*)
+          )
         `
-        *,
-        initiative_devices(
-          *,
-          device:devices(*)
-        ),
-        initiative_parts(
-          *,
-          part:parts(*)
         )
-      `
-      )
-      .eq("id", id)
-      .single();
-    if (error) throw error;
-    return data as InitiativeWithRelations;
+        .eq("id", id)
+        .single();
+      if (error) throw error;
+      return data as InitiativeWithRelations;
+    } catch {
+      const { data, error } = await supabase
+        .from("initiatives")
+        .select(
+          `
+          *,
+          initiative_devices(
+            *,
+            device:devices(*)
+          ),
+          initiative_parts(
+            *,
+            part:parts(*)
+          )
+        `
+        )
+        .eq("id", id)
+        .single();
+      if (error) throw error;
+      return {
+        ...(data as InitiativeWithRelations),
+        research_documents: [],
+      };
+    }
   },
 
   create: async (
@@ -275,7 +333,7 @@ export const serverInitiativesApi = {
     const { count, error } = await supabase
       .from("initiatives")
       .select("*", { count: "exact", head: true })
-      .in("status", ["planning", "active"]);
+      .in("status", ["suggested", "approved", "executing"]);
     if (error) throw error;
     return count || 0;
   },
@@ -401,15 +459,49 @@ export const serverTasksApi = {
     return data as TaskWithAssignee[];
   },
 
-  getById: async (id: string): Promise<TaskWithAssignee> => {
+  getById: async (id: string): Promise<TaskWithDetails> => {
     const supabase = getSupabase();
-    const { data, error } = await supabase
-      .from("tasks")
-      .select("*, assignee:team_members(*)")
-      .eq("id", id)
-      .single();
-    if (error) throw error;
-    return data as TaskWithAssignee;
+    try {
+      const { data, error } = await supabase
+        .from("tasks")
+        .select(
+          `
+          *,
+          assignee:team_members(*),
+          subtasks:task_subtasks(
+            *,
+            assignee:team_members(*)
+          ),
+          files:task_files(
+            *,
+            uploaded_by_member:team_members(*)
+          ),
+          meetings:task_meetings(*),
+          mentions:task_mentions(
+            *,
+            member:team_members(*)
+          )
+          `
+        )
+        .eq("id", id)
+        .single();
+      if (error) throw error;
+      return data as TaskWithDetails;
+    } catch {
+      const { data, error } = await supabase
+        .from("tasks")
+        .select("*, assignee:team_members(*)")
+        .eq("id", id)
+        .single();
+      if (error) throw error;
+      return {
+        ...(data as TaskWithAssignee),
+        subtasks: [],
+        files: [],
+        meetings: [],
+        mentions: [],
+      } as TaskWithDetails;
+    }
   },
 
   create: async (
@@ -451,6 +543,178 @@ export const serverTasksApi = {
       .in("status", ["todo", "in_progress"]);
     if (error) throw error;
     return count || 0;
+  },
+};
+
+// ── Task Subtasks API ────────────────────────────────────────
+export const serverTaskSubtasksApi = {
+  create: async (
+    subtask: Omit<TaskSubtask, "id" | "created_at" | "updated_at">
+  ): Promise<TaskSubtask> => {
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from("task_subtasks")
+      .insert(subtask)
+      .select()
+      .single();
+    if (error) throw error;
+    return data as TaskSubtask;
+  },
+
+  update: async (
+    id: string,
+    updates: Partial<TaskSubtask>
+  ): Promise<TaskSubtask> => {
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from("task_subtasks")
+      .update(updates)
+      .eq("id", id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data as TaskSubtask;
+  },
+
+  delete: async (id: string): Promise<void> => {
+    const supabase = getSupabase();
+    const { error } = await supabase
+      .from("task_subtasks")
+      .delete()
+      .eq("id", id);
+    if (error) throw error;
+  },
+};
+
+// ── Task Files API ────────────────────────────────────────────
+export const serverTaskFilesApi = {
+  getByTask: async (taskId: string): Promise<TaskFile[]> => {
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from("task_files")
+      .select("*")
+      .eq("task_id", taskId)
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    return data as TaskFile[];
+  },
+
+  create: async (
+    file: Omit<TaskFile, "id" | "created_at">
+  ): Promise<TaskFile> => {
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from("task_files")
+      .insert(file)
+      .select()
+      .single();
+    if (error) throw error;
+    return data as TaskFile;
+  },
+
+  delete: async (id: string): Promise<void> => {
+    const supabase = getSupabase();
+    const { error } = await supabase.from("task_files").delete().eq("id", id);
+    if (error) throw error;
+  },
+};
+
+// ── Task Meetings API ─────────────────────────────────────────
+export const serverTaskMeetingsApi = {
+  create: async (
+    meeting: Omit<TaskMeeting, "id" | "created_at" | "updated_at">
+  ): Promise<TaskMeeting> => {
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from("task_meetings")
+      .insert(meeting)
+      .select()
+      .single();
+    if (error) throw error;
+    return data as TaskMeeting;
+  },
+
+  update: async (
+    id: string,
+    updates: Partial<TaskMeeting>
+  ): Promise<TaskMeeting> => {
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from("task_meetings")
+      .update(updates)
+      .eq("id", id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data as TaskMeeting;
+  },
+
+  delete: async (id: string): Promise<void> => {
+    const supabase = getSupabase();
+    const { error } = await supabase
+      .from("task_meetings")
+      .delete()
+      .eq("id", id);
+    if (error) throw error;
+  },
+};
+
+// ── Task Mentions API ─────────────────────────────────────────
+export const serverTaskMentionsApi = {
+  create: async (
+    mention: Omit<TaskMention, "id" | "created_at" | "updated_at">
+  ): Promise<TaskMention> => {
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from("task_mentions")
+      .insert(mention)
+      .select()
+      .single();
+    if (error) throw error;
+    return data as TaskMention;
+  },
+
+  update: async (
+    id: string,
+    updates: Partial<TaskMention>
+  ): Promise<TaskMention> => {
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from("task_mentions")
+      .update(updates)
+      .eq("id", id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data as TaskMention;
+  },
+
+  delete: async (id: string): Promise<void> => {
+    const supabase = getSupabase();
+    const { error } = await supabase
+      .from("task_mentions")
+      .delete()
+      .eq("id", id);
+    if (error) throw error;
+  },
+
+  getByMember: async (
+    memberId: string,
+    statuses: TaskMentionStatus[] = ["new"]
+  ): Promise<TaskMentionWithMember[]> => {
+    const supabase = getSupabase();
+    try {
+      const { data, error } = await supabase
+        .from("task_mentions")
+        .select("*, member:team_members(*), task:tasks(*)")
+        .eq("member_id", memberId)
+        .in("status", statuses)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as TaskMentionWithMember[];
+    } catch {
+      return [];
+    }
   },
 };
 
@@ -541,6 +805,205 @@ export const serverPurchasesApi = {
         0
       ) || 0
     );
+  },
+};
+
+// ── Research Documents API ────────────────────────────────────
+export const serverResearchDocumentsApi = {
+  getAll: async (): Promise<ResearchDocumentWithRelations[]> => {
+    const supabase = getSupabase();
+    try {
+      const { data, error } = await supabase
+        .from("research_documents")
+        .select("*, initiative:initiatives(*), author:team_members(*)")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as ResearchDocumentWithRelations[];
+    } catch {
+      return [];
+    }
+  },
+
+  getFinal: async (): Promise<ResearchDocumentWithRelations[]> => {
+    const supabase = getSupabase();
+    try {
+      const { data, error } = await supabase
+        .from("research_documents")
+        .select("*, initiative:initiatives(*), author:team_members(*)")
+        .eq("status", "final")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as ResearchDocumentWithRelations[];
+    } catch {
+      return [];
+    }
+  },
+
+  create: async (
+    document: Omit<ResearchDocument, "id" | "created_at" | "updated_at">
+  ): Promise<ResearchDocument> => {
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from("research_documents")
+      .insert(document)
+      .select()
+      .single();
+    if (error) throw error;
+    return data as ResearchDocument;
+  },
+
+  update: async (
+    id: string,
+    updates: Partial<ResearchDocument>
+  ): Promise<ResearchDocument> => {
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from("research_documents")
+      .update(updates)
+      .eq("id", id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data as ResearchDocument;
+  },
+
+  delete: async (id: string): Promise<void> => {
+    const supabase = getSupabase();
+    const { error } = await supabase
+      .from("research_documents")
+      .delete()
+      .eq("id", id);
+    if (error) throw error;
+  },
+};
+
+// ── Internal Drive Files API ─────────────────────────────────
+export const serverDriveFilesApi = {
+  list: async ({
+    scope,
+    limit = 100,
+    isPublic,
+  }: {
+    scope?: string;
+    limit?: number;
+    isPublic?: boolean;
+  } = {}): Promise<InternalDriveFile[]> => {
+    const supabase = getSupabase();
+    let query = supabase
+      .from("internal_drive_files")
+      .select(
+        "id, name, content_type, size_bytes, scope, is_public, created_by_user_id, created_at, updated_at"
+      )
+      .order("created_at", { ascending: false })
+      .limit(limit);
+
+    if (scope) query = query.eq("scope", scope);
+    if (typeof isPublic === "boolean") query = query.eq("is_public", isPublic);
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return data as InternalDriveFile[];
+  },
+
+  getById: async (id: string): Promise<InternalDriveFile | null> => {
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from("internal_drive_files")
+      .select(
+        "id, name, content_type, size_bytes, scope, is_public, created_by_user_id, created_at, updated_at"
+      )
+      .eq("id", id)
+      .maybeSingle();
+    if (error) throw error;
+    return (data as InternalDriveFile | null) || null;
+  },
+
+  getByIdWithData: async (
+    id: string
+  ): Promise<(InternalDriveFile & { data: Buffer }) | null> => {
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from("internal_drive_files")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) return null;
+
+    return {
+      ...(data as InternalDriveFile),
+      data: byteaToBuffer((data as { data: unknown }).data),
+    };
+  },
+
+  createFromBuffer: async ({
+    name,
+    contentType,
+    data,
+    scope = "general",
+    isPublic = false,
+    createdByUserId = null,
+  }: {
+    name: string;
+    contentType: string;
+    data: Buffer;
+    scope?: string;
+    isPublic?: boolean;
+    createdByUserId?: string | null;
+  }): Promise<InternalDriveFile> => {
+    const supabase = getSupabase();
+    const { data: inserted, error } = await supabase
+      .from("internal_drive_files")
+      .insert({
+        name,
+        content_type: contentType,
+        size_bytes: data.byteLength,
+        data: bufferToByteaHex(data),
+        scope,
+        is_public: isPublic,
+        created_by_user_id: createdByUserId,
+      })
+      .select(
+        "id, name, content_type, size_bytes, scope, is_public, created_by_user_id, created_at, updated_at"
+      )
+      .single();
+    if (error) throw error;
+    return inserted as InternalDriveFile;
+  },
+
+  createFromBase64: async ({
+    name,
+    contentType,
+    dataBase64,
+    scope = "general",
+    isPublic = false,
+    createdByUserId = null,
+  }: {
+    name: string;
+    contentType: string;
+    dataBase64: string;
+    scope?: string;
+    isPublic?: boolean;
+    createdByUserId?: string | null;
+  }): Promise<InternalDriveFile> => {
+    const data = Buffer.from(dataBase64, "base64");
+    return serverDriveFilesApi.createFromBuffer({
+      name,
+      contentType,
+      data,
+      scope,
+      isPublic,
+      createdByUserId,
+    });
+  },
+
+  delete: async (id: string): Promise<void> => {
+    const supabase = getSupabase();
+    const { error } = await supabase
+      .from("internal_drive_files")
+      .delete()
+      .eq("id", id);
+    if (error) throw error;
   },
 };
 

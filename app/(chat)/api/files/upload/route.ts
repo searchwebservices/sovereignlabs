@@ -1,8 +1,8 @@
-import { put } from "@vercel/blob";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { getSession } from "@/lib/supabase/server";
+import { serverDriveFilesApi } from "@/lib/supabase/server-api";
 
 // Use Blob instead of File since File is not available in Node.js environment
 const FileSchema = z.object({
@@ -46,19 +46,25 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: errorMessage }, { status: 400 });
     }
 
-    // Get filename from formData since Blob doesn't have name property
-    const filename = (formData.get("file") as File).name;
-    const fileBuffer = await file.arrayBuffer();
+    const fileFromForm = formData.get("file") as File;
+    const filename = fileFromForm.name || `upload-${Date.now()}`;
+    const fileBuffer = Buffer.from(await file.arrayBuffer());
 
-    try {
-      const data = await put(`${filename}`, fileBuffer, {
-        access: "public",
-      });
+    const savedFile = await serverDriveFilesApi.createFromBuffer({
+      name: filename,
+      contentType: file.type,
+      data: fileBuffer,
+      scope: "chat_attachment",
+      isPublic: true,
+      createdByUserId: session.user.id,
+    });
 
-      return NextResponse.json(data);
-    } catch (_error) {
-      return NextResponse.json({ error: "Upload failed" }, { status: 500 });
-    }
+    return NextResponse.json({
+      id: savedFile.id,
+      url: `/api/files/${savedFile.id}`,
+      pathname: savedFile.name,
+      contentType: savedFile.content_type,
+    });
   } catch (_error) {
     return NextResponse.json(
       { error: "Failed to process request" },

@@ -9,9 +9,18 @@ import type {
   LabStats,
   TeamMember,
   Task,
+  TaskFile,
+  TaskMeeting,
+  TaskMention,
+  TaskMentionStatus,
+  TaskMentionWithMember,
+  TaskSubtask,
   TaskWithAssignee,
+  TaskWithDetails,
   Purchase,
   PurchaseWithRelations,
+  ResearchDocument,
+  ResearchDocumentWithRelations,
   UserModel,
 } from "@/lib/types/lab";
 
@@ -182,32 +191,61 @@ export const initiativesApi = {
     const { data, error } = await supabase
       .from("initiatives")
       .select("*")
-      .in("status", ["planning", "active"])
+      .in("status", ["suggested", "approved", "executing"])
       .order("created_at", { ascending: false });
     if (error) throw error;
     return data as Initiative[];
   },
 
   getById: async (id: string): Promise<InitiativeWithRelations> => {
-    const { data, error } = await supabase
-      .from("initiatives")
-      .select(
+    try {
+      const { data, error } = await supabase
+        .from("initiatives")
+        .select(
+          `
+          *,
+          initiative_devices(
+            *,
+            device:devices(*)
+          ),
+          initiative_parts(
+            *,
+            part:parts(*)
+          ),
+          research_documents(
+            *,
+            author:team_members(*)
+          )
         `
-        *,
-        initiative_devices(
-          *,
-          device:devices(*)
-        ),
-        initiative_parts(
-          *,
-          part:parts(*)
         )
-      `
-      )
-      .eq("id", id)
-      .single();
-    if (error) throw error;
-    return data as InitiativeWithRelations;
+        .eq("id", id)
+        .single();
+      if (error) throw error;
+      return data as InitiativeWithRelations;
+    } catch {
+      const { data, error } = await supabase
+        .from("initiatives")
+        .select(
+          `
+          *,
+          initiative_devices(
+            *,
+            device:devices(*)
+          ),
+          initiative_parts(
+            *,
+            part:parts(*)
+          )
+        `
+        )
+        .eq("id", id)
+        .single();
+      if (error) throw error;
+      return {
+        ...(data as InitiativeWithRelations),
+        research_documents: [],
+      };
+    }
   },
 
   create: async (
@@ -248,7 +286,7 @@ export const initiativesApi = {
     const { count, error } = await supabase
       .from("initiatives")
       .select("*", { count: "exact", head: true })
-      .in("status", ["planning", "active"]);
+      .in("status", ["suggested", "approved", "executing"]);
     if (error) throw error;
     return count || 0;
   },
@@ -365,14 +403,48 @@ export const tasksApi = {
     return data as TaskWithAssignee[];
   },
 
-  getById: async (id: string): Promise<TaskWithAssignee> => {
-    const { data, error } = await supabase
-      .from("tasks")
-      .select("*, assignee:team_members(*)")
-      .eq("id", id)
-      .single();
-    if (error) throw error;
-    return data as TaskWithAssignee;
+  getById: async (id: string): Promise<TaskWithDetails> => {
+    try {
+      const { data, error } = await supabase
+        .from("tasks")
+        .select(
+          `
+          *,
+          assignee:team_members(*),
+          subtasks:task_subtasks(
+            *,
+            assignee:team_members(*)
+          ),
+          files:task_files(
+            *,
+            uploaded_by_member:team_members(*)
+          ),
+          meetings:task_meetings(*),
+          mentions:task_mentions(
+            *,
+            member:team_members(*)
+          )
+          `
+        )
+        .eq("id", id)
+        .single();
+      if (error) throw error;
+      return data as TaskWithDetails;
+    } catch {
+      const { data, error } = await supabase
+        .from("tasks")
+        .select("*, assignee:team_members(*)")
+        .eq("id", id)
+        .single();
+      if (error) throw error;
+      return {
+        ...(data as TaskWithAssignee),
+        subtasks: [],
+        files: [],
+        meetings: [],
+        mentions: [],
+      } as TaskWithDetails;
+    }
   },
 
   create: async (
@@ -410,6 +482,213 @@ export const tasksApi = {
       .in("status", ["todo", "in_progress"]);
     if (error) throw error;
     return count || 0;
+  },
+};
+
+// ── Task Subtasks API ────────────────────────────────────────
+export const taskSubtasksApi = {
+  create: async (
+    subtask: Omit<TaskSubtask, "id" | "created_at" | "updated_at">
+  ): Promise<TaskSubtask> => {
+    const { data, error } = await supabase
+      .from("task_subtasks")
+      .insert(subtask)
+      .select()
+      .single();
+    if (error) throw error;
+    return data as TaskSubtask;
+  },
+
+  update: async (
+    id: string,
+    updates: Partial<TaskSubtask>
+  ): Promise<TaskSubtask> => {
+    const { data, error } = await supabase
+      .from("task_subtasks")
+      .update(updates)
+      .eq("id", id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data as TaskSubtask;
+  },
+
+  delete: async (id: string): Promise<void> => {
+    const { error } = await supabase.from("task_subtasks").delete().eq("id", id);
+    if (error) throw error;
+  },
+};
+
+// ── Task Files API ────────────────────────────────────────────
+export const taskFilesApi = {
+  create: async (
+    file: Omit<TaskFile, "id" | "created_at">
+  ): Promise<TaskFile> => {
+    const { data, error } = await supabase
+      .from("task_files")
+      .insert(file)
+      .select()
+      .single();
+    if (error) throw error;
+    return data as TaskFile;
+  },
+
+  delete: async (id: string): Promise<void> => {
+    const { error } = await supabase.from("task_files").delete().eq("id", id);
+    if (error) throw error;
+  },
+};
+
+// ── Task Meetings API ─────────────────────────────────────────
+export const taskMeetingsApi = {
+  create: async (
+    meeting: Omit<TaskMeeting, "id" | "created_at" | "updated_at">
+  ): Promise<TaskMeeting> => {
+    const { data, error } = await supabase
+      .from("task_meetings")
+      .insert(meeting)
+      .select()
+      .single();
+    if (error) throw error;
+    return data as TaskMeeting;
+  },
+
+  update: async (
+    id: string,
+    updates: Partial<TaskMeeting>
+  ): Promise<TaskMeeting> => {
+    const { data, error } = await supabase
+      .from("task_meetings")
+      .update(updates)
+      .eq("id", id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data as TaskMeeting;
+  },
+
+  delete: async (id: string): Promise<void> => {
+    const { error } = await supabase.from("task_meetings").delete().eq("id", id);
+    if (error) throw error;
+  },
+};
+
+// ── Task Mentions API ─────────────────────────────────────────
+export const taskMentionsApi = {
+  create: async (
+    mention: Omit<TaskMention, "id" | "created_at" | "updated_at">
+  ): Promise<TaskMention> => {
+    const { data, error } = await supabase
+      .from("task_mentions")
+      .insert(mention)
+      .select()
+      .single();
+    if (error) throw error;
+    return data as TaskMention;
+  },
+
+  update: async (
+    id: string,
+    updates: Partial<TaskMention>
+  ): Promise<TaskMention> => {
+    const { data, error } = await supabase
+      .from("task_mentions")
+      .update(updates)
+      .eq("id", id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data as TaskMention;
+  },
+
+  delete: async (id: string): Promise<void> => {
+    const { error } = await supabase
+      .from("task_mentions")
+      .delete()
+      .eq("id", id);
+    if (error) throw error;
+  },
+
+  getByMember: async (
+    memberId: string,
+    statuses: TaskMentionStatus[] = ["new"]
+  ): Promise<TaskMentionWithMember[]> => {
+    try {
+      const { data, error } = await supabase
+        .from("task_mentions")
+        .select("*, member:team_members(*), task:tasks(*)")
+        .eq("member_id", memberId)
+        .in("status", statuses)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as TaskMentionWithMember[];
+    } catch {
+      return [];
+    }
+  },
+};
+
+// ── Research Documents API ────────────────────────────────────
+export const researchDocumentsApi = {
+  getAll: async (): Promise<ResearchDocumentWithRelations[]> => {
+    try {
+      const { data, error } = await supabase
+        .from("research_documents")
+        .select("*, initiative:initiatives(*), author:team_members(*)")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as ResearchDocumentWithRelations[];
+    } catch {
+      return [];
+    }
+  },
+
+  getFinal: async (): Promise<ResearchDocumentWithRelations[]> => {
+    try {
+      const { data, error } = await supabase
+        .from("research_documents")
+        .select("*, initiative:initiatives(*), author:team_members(*)")
+        .eq("status", "final")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as ResearchDocumentWithRelations[];
+    } catch {
+      return [];
+    }
+  },
+
+  create: async (
+    document: Omit<ResearchDocument, "id" | "created_at" | "updated_at">
+  ): Promise<ResearchDocument> => {
+    const { data, error } = await supabase
+      .from("research_documents")
+      .insert(document)
+      .select()
+      .single();
+    if (error) throw error;
+    return data as ResearchDocument;
+  },
+
+  update: async (
+    id: string,
+    updates: Partial<ResearchDocument>
+  ): Promise<ResearchDocument> => {
+    const { data, error } = await supabase
+      .from("research_documents")
+      .update(updates)
+      .eq("id", id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data as ResearchDocument;
+  },
+
+  delete: async (id: string): Promise<void> => {
+    const { error } = await supabase
+      .from("research_documents")
+      .delete()
+      .eq("id", id);
+    if (error) throw error;
   },
 };
 

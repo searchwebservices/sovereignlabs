@@ -64,6 +64,27 @@
       "when": 1768479010084,
       "tag": "0008_flat_forgotten_one",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1770745188000,
+      "tag": "0009_swift_hammerhead",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1770801000000,
+      "tag": "0010_closed_orca",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1770804600000,
+      "tag": "0011_initiative_status_cleanup",
+      "breakpoints": true
     }
   ]
 }

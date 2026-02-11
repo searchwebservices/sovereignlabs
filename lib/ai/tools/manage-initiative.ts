@@ -27,7 +27,7 @@ export const manageInitiative = tool({
       .describe("Initiative name (required for create)"),
     description: z.string().optional().describe("Initiative description"),
     status: z
-      .enum(["planning", "active", "completed", "archived"])
+      .enum(["suggested", "approved", "executing", "finalized", "archived"])
       .optional()
       .describe("Initiative status"),
     start_date: z.string().optional().describe("Start date (YYYY-MM-DD)"),
@@ -64,7 +64,7 @@ export const manageInitiative = tool({
           .insert({
             name: fields.name,
             description: fields.description || null,
-            status: fields.status || "planning",
+            status: fields.status || "suggested",
             start_date: fields.start_date || null,
             target_date: fields.target_date || null,
             completion_date: fields.completion_date || null,
