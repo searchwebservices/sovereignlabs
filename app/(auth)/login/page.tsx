@@ -50,7 +50,7 @@ export default function Page() {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/logo-black.png"
-            alt="Sovereign Labs"
+            alt="SovereignTeamOS"
             width={48}
             height={48}
             className="size-12 dark:hidden"
@@ -58,14 +58,14 @@ export default function Page() {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/logo-white.png"
-            alt="Sovereign Labs"
+            alt="SovereignTeamOS"
             width={48}
             height={48}
             className="size-12 hidden dark:block"
           />
           <div>
             <h3 className="font-semibold text-xl dark:text-zinc-50">
-              Sovereign Labs
+              SovereignTeamOS
             </h3>
             <p className="mt-1 text-gray-500 text-sm dark:text-zinc-400">
               Sign in with your credentials to continue

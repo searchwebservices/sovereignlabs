@@ -76,7 +76,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src="/logo-black.png"
-                  alt="Sovereign Labs"
+                  alt="SovereignTeamOS"
                   width={28}
                   height={28}
                   className="size-7 dark:hidden"
@@ -84,12 +84,12 @@ export function AppSidebar({ user }: { user: User | undefined }) {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src="/logo-white.png"
-                  alt="Sovereign Labs"
+                  alt="SovereignTeamOS"
                   width={28}
                   height={28}
                   className="size-7 hidden dark:block"
                 />
-                <span className="truncate">Sovereign Labs</span>
+                <span className="truncate">SovereignTeamOS</span>
               </Link>
             </SidebarMenuItem>
           </SidebarMenu>

@@ -6,27 +6,27 @@ import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://sovereignlabs.com"),
+  metadataBase: new URL("https://sovereignlabs.vercel.app"),
   title: {
-    default: "Sovereign Labs",
-    template: "%s | Sovereign Labs",
+    default: "SovereignTeamOS",
+    template: "%s | SovereignTeamOS",
   },
   description:
-    "Sovereign Labs — AI-powered lab management for devices, parts, and research initiatives.",
-  applicationName: "Sovereign Labs",
-  keywords: ["AI", "lab management", "inventory", "devices", "research"],
+    "SovereignTeamOS — Sovereign Labs operations dashboard for devices, parts, and research initiatives.",
+  applicationName: "SovereignTeamOS",
+  keywords: ["AI", "lab management", "inventory", "devices", "research", "sovereign labs"],
   openGraph: {
     type: "website",
-    siteName: "Sovereign Labs",
-    title: "Sovereign Labs",
+    siteName: "SovereignTeamOS",
+    title: "SovereignTeamOS",
     description:
-      "AI-powered lab management for devices, parts, and research initiatives.",
+      "Sovereign Labs operations dashboard for devices, parts, and research initiatives.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Sovereign Labs",
+    title: "SovereignTeamOS",
     description:
-      "AI-powered lab management for devices, parts, and research initiatives.",
+      "Sovereign Labs operations dashboard for devices, parts, and research initiatives.",
   },
   icons: {
     icon: [
